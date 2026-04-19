@@ -101,13 +101,12 @@ def total_remaining_distance(wp_index: int, lat: float, lon: float) -> float:
 
 def network_quality(speed: float) -> str:
     """Mock network quality based on simulated signal."""
-    """ r = random.random()
+    r = random.random()
     if r > 0.85:
         return "poor"
     if r > 0.60:
         return "fluctuating"
-    return "good" """
-    return "poor"
+    return "good"
 
 
 def predict_eta(distance_km: float, avg_speed_kmh: float,
