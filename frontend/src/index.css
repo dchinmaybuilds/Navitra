@@ -35,7 +35,7 @@ body {
 }
 
 .infopanel-toggle.opened {
-	transform: translateX(-180px);
+	transform: translateX(-290px);
 }
 
 .infopanel-toggle.closed {
@@ -65,7 +65,7 @@ body {
 	top: 50px;
 	right: 0px;
 	z-index: 1000;
-	width: 200px;
+	width: 310px;
 	height: 125px;
 	display: flex;
 	flex-direction: column;
@@ -86,11 +86,9 @@ body {
 	align-items: center;
 }
 
-.timer-icon {
-	margin-right: 7.5px;
-}
-
-.network-icon {
+.timer-icon,
+.network-icon,
+.location-pin {
 	margin-right: 7.5px;
 }
 

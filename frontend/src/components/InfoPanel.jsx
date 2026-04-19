@@ -22,8 +22,8 @@ const InfoPanel = ({
 				)}
 				{hasArrived ? (
 					'Bus has arrived!'
-				) : eta && destinationCity ? (
-					`ETA to ${destinationCity} ${eta} mins`
+				) : eta > 0 ? (
+					`ETA to ${destinationCity || 'destination'}: ${eta} mins`
 				) : (
 					<p className="loading">
 						Calculating<span className="dots"></span>
@@ -32,15 +32,17 @@ const InfoPanel = ({
 			</div>
 			<div className="show-network">
 				{networkState === 'good' ? (
-					<img src={wifi} className="networkIcon" />
-				) : networkState === 'medium' ? (
-					<img src={wifimedium} className="networkIcon" />
+					<img src={wifi} className="network-icon" />
+				) : networkState === 'fluctuating' ? (
+					<img src={wifimedium} className="network-icon" />
 				) : networkState === 'poor' ? (
-					<img src={wifipoor} className="networkIcon" />
+					<img src={wifipoor} className="network-icon" />
 				) : (
 					<img src={networkIcon} className="network-icon" />
 				)}
-				{networkState || (
+				{networkState ? (
+					networkState.toUpperCase()
+				) : (
 					<p className="loading">
 						Connecting<span className="dots"></span>
 					</p>

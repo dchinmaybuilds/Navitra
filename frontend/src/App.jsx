@@ -16,6 +16,10 @@ function App() {
 		} else if (data.type === 'update') {
 			setETA(data.eta);
 			setNetworkState(data.network);
+		} else if (data.type === 'reset') {
+			setETA(null);
+			setNetworkState(null);
+			setHasArrived(false);
 		} else {
 			setHasArrived(true);
 		}

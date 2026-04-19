@@ -13,6 +13,7 @@ from typing import Optional
 
 import joblib
 import numpy as np
+import pandas as pd
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,6 +25,11 @@ print(f"[startup] ETA model loaded from {MODEL_PATH}")
 FEATURES = ["distance_km", "avg_speed_kmh", "hour_of_day",
             "day_of_week", "traffic_factor", "stops_remaining"]
 
+SLEEP_INTERVALS = {
+        "good": 5,
+        "fluctuating": 8,
+        "poor": 12
+    }
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Bus Tracker API")
 
@@ -35,18 +41,37 @@ app.add_middleware(
 )
 
 # ── Route config (Mumbai example) ─────────────────────────────────────────────
-# A simple polyline from Bandra to CST (sampled waypoints)
 ROUTE_WAYPOINTS = [
-    (19.0596, 72.8295),   # Bandra Station
-    (19.0510, 72.8327),
-    (19.0430, 72.8390),
-    (19.0370, 72.8420),
-    (19.0300, 72.8465),
-    (19.0220, 72.8510),
-    (19.0160, 72.8550),
-    (19.0100, 72.8600),
-    (19.0060, 72.8640),
-    (19.0018, 72.8680),   # CST / Chhatrapati Shivaji Terminus
+    (19.135697, 72.855172),
+    (19.134228, 72.855103),
+    (19.132675, 72.855164),
+    (19.131064, 72.855228),
+    (19.129572, 72.855164),
+    (19.128078, 72.855417),
+    (19.126767, 72.855544),
+    (19.125572, 72.855986),
+    (19.124794, 72.856556),
+    (19.122944, 72.856492),
+    (19.121931, 72.856303),
+    (19.120258, 72.855669),
+    (19.118586, 72.855542),
+    (19.117453, 72.855228),
+    (19.116439, 72.855036),
+    (19.115244, 72.854975),
+    (19.114050, 72.854847),
+    (19.112439, 72.854469),
+    (19.110828, 72.854153),
+    (19.108797, 72.853900),
+    (19.105872, 72.853900),
+    (19.102836, 72.854278),
+    (19.099914, 72.854422),
+    (19.097197, 72.853200),
+    (19.094936, 72.852461),
+    (19.093225, 72.851047),
+    (19.092117, 72.848553),
+    (19.090961, 72.845867),
+    (19.089253, 72.844614),
+    (19.086639, 72.845867)
 ]
 DESTINATION = ROUTE_WAYPOINTS[-1]
 
@@ -79,16 +104,17 @@ def network_quality(speed: float) -> str:
     if r > 0.85:
         return "poor"
     if r > 0.60:
-        return "medium"
+        return "fluctuating"
     return "good"
 
 
 def predict_eta(distance_km: float, avg_speed_kmh: float,
                 traffic_factor: float, stops_remaining: int) -> float:
     now = datetime.now()
-    X = np.array([[distance_km, avg_speed_kmh,
+    X = pd.DataFrame([[distance_km, avg_speed_kmh,
                    now.hour, now.weekday(),
-                   traffic_factor, stops_remaining]])
+                   traffic_factor, stops_remaining]],
+                 columns=FEATURES)
     eta = model.predict(X)[0]
     return round(float(eta), 1)
 
@@ -114,7 +140,6 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             if wp_idx >= len(ROUTE_WAYPOINTS) - 1:
-                # Arrived — send final message and close
                 await websocket.send_text(json.dumps({
                     "type": "arrived",
                     "lat": lat, "lng": lon,
@@ -122,17 +147,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 }))
                 break
 
-            # Move towards next waypoint
-            target_lat, target_lon = ROUTE_WAYPOINTS[wp_idx + 1]
-            step_frac = random.uniform(0.08, 0.18)   # how far along each tick
-            lat = lat + (target_lat - lat) * step_frac
-            lon = lon + (target_lon - lon) * step_frac
+            wp_idx += 1
+            lat, lon = ROUTE_WAYPOINTS[wp_idx]
 
-            # Reached waypoint?
-            if haversine_km(lat, lon, target_lat, target_lon) < 0.05:
-                wp_idx += 1
-
-            # Simulate instantaneous speed (kmh) with traffic jitter
             now_hour = datetime.now().hour
             is_peak = (8 <= now_hour <= 10) or (17 <= now_hour <= 20)
             base_speed = random.uniform(12, 20) if is_peak else random.uniform(22, 38)
@@ -141,12 +158,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 speed_history.pop(0)
             avg_speed = float(np.mean(speed_history))
 
-            # Traffic factor: inverse of speed ratio to free-flow
             traffic_factor = round(1 - (avg_speed / 40.0), 2)
-
             distance_km = total_remaining_distance(wp_idx, lat, lon)
             stops_remaining = max(0, len(ROUTE_WAYPOINTS) - 1 - wp_idx)
-
             eta = predict_eta(distance_km, avg_speed, traffic_factor, stops_remaining)
             network = network_quality(avg_speed)
 
@@ -164,7 +178,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 },
             }
             await websocket.send_text(json.dumps(payload))
-            await asyncio.sleep(1.5)   # broadcast every 1.5 s
+            await asyncio.sleep(SLEEP_INTERVALS[network])
 
     except WebSocketDisconnect:
         print("[ws] client disconnected")

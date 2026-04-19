@@ -2,6 +2,7 @@ import mapboxgl from 'mapbox-gl';
 import { useEffect, useRef } from 'react';
 import axios from 'axios';
 
+const SLEEP_INTERVALS = { good: 5, fluctuating: 8, poor: 12 };
 const Map = ({ onData }) => {
 	const mapContainer = useRef(null);
 	const mapRef = useRef(null);
@@ -10,11 +11,11 @@ const Map = ({ onData }) => {
 	// Refs for marker interpolation
 	const currentLngRef = useRef(72.8777);
 	const currentLatRef = useRef(19.076);
-	const targetLngRef = useRef(72.8777);
-	const targetLatRef = useRef(19.076);
 	// Ref for request animation frame
 	const rafRef = useRef(null);
-	const t = useRef(0.05);
+	const t = useRef(0);
+	const targetLngRef = useRef(72.8777);
+	const targetLatRef = useRef(19.076);
 	const socketRef = useRef(null);
 	const timeoutRef = useRef(null);
 	// Ref for destination
@@ -75,6 +76,8 @@ const Map = ({ onData }) => {
 				} else if (data.type === 'update') {
 					targetLngRef.current = data.lng;
 					targetLatRef.current = data.lat;
+					const frames = SLEEP_INTERVALS[data.network] * 144;
+					t.current = 1 - Math.pow(0.25, 1 / frames);
 					onData({
 						type: data.type,
 						eta: data.eta,
@@ -85,6 +88,7 @@ const Map = ({ onData }) => {
 				}
 			};
 			socket.onclose = () => {
+				onData({ type: 'reset' });
 				timeoutRef.current = setTimeout(connect, 3000);
 			};
 		};
@@ -98,18 +102,19 @@ const Map = ({ onData }) => {
 	// Effect 3: To interpolate marker
 	useEffect(() => {
 		const animateMarker = () => {
-			// Lerp formula
-			currentLngRef.current =
-				currentLngRef.current +
-				(targetLngRef.current - currentLngRef.current) * t.current;
-			currentLatRef.current =
-				currentLatRef.current +
-				(targetLatRef.current - currentLatRef.current) * t.current;
+			if (markerRef.current) {
+				currentLngRef.current =
+					currentLngRef.current +
+					(targetLngRef.current - currentLngRef.current) * t.current;
+				currentLatRef.current =
+					currentLatRef.current +
+					(targetLatRef.current - currentLatRef.current) * t.current;
+				markerRef.current.setLngLat([
+					currentLngRef.current,
+					currentLatRef.current,
+				]);
+			}
 			rafRef.current = requestAnimationFrame(animateMarker);
-			markerRef.current.setLngLat([
-				currentLngRef.current,
-				currentLatRef.current,
-			]);
 		};
 		requestAnimationFrame(animateMarker);
 		return () => {
