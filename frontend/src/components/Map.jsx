@@ -72,7 +72,7 @@ const Map = ({ onData }) => {
 						destinationLngRef.current,
 					);
 					onData({ type: 'init', destinationCity: destinationCityRef.current });
-				} else {
+				} else if (data.type === 'update') {
 					targetLngRef.current = data.lng;
 					targetLatRef.current = data.lat;
 					onData({
@@ -80,6 +80,8 @@ const Map = ({ onData }) => {
 						eta: data.eta,
 						network: data.network,
 					});
+				} else {
+					onData({ type: 'arrived' });
 				}
 			};
 			socket.onclose = () => {

@@ -3,13 +3,26 @@ import timerIcon from '../assets/timer_22dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.sv
 import wifi from '../assets/tdesign--wifi-1-filled.svg';
 import wifimedium from '../assets/material-symbols--network-wifi-2-bar.svg';
 import wifipoor from '../assets/tdesign--wifi-off-1-filled.svg';
+import locationPin from '../assets/boxicons--location-pin-filled.svg';
 
-const InfoPanel = ({ isOpen, eta, networkState, destinationCity }) => {
+const InfoPanel = ({
+	isOpen,
+	eta,
+	networkState,
+	destinationCity,
+	hasArrived,
+}) => {
 	return (
 		<div className={`info-panel ${isOpen ? 'visible' : ''}`}>
 			<div className="show-eta">
-				<img src={timerIcon} className="timer-icon" />
-				{eta && destinationCity ? (
+				{hasArrived ? (
+					<img src={locationPin} className="location-pin" />
+				) : (
+					<img src={timerIcon} className="timer-icon" />
+				)}
+				{hasArrived ? (
+					'Bus has arrived!'
+				) : eta && destinationCity ? (
 					`ETA to ${destinationCity} ${eta} mins`
 				) : (
 					<p className="loading">

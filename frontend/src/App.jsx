@@ -9,12 +9,15 @@ function App() {
 	const [networkState, setNetworkState] = useState(null);
 	const [isOpen, setIsOpen] = useState(false);
 	const [destinationCity, setDestinationCity] = useState('');
+	const [hasArrived, setHasArrived] = useState(false);
 	const handleData = (data) => {
 		if (data.type === 'init') {
 			setDestinationCity(data.destinationCity);
-		} else {
+		} else if (data.type === 'update') {
 			setETA(data.eta);
 			setNetworkState(data.network);
+		} else {
+			setHasArrived(true);
 		}
 	};
 	return (
@@ -35,6 +38,7 @@ function App() {
 				eta={eta}
 				networkState={networkState}
 				destinationCity={destinationCity}
+				hasArrived={hasArrived}
 			/>
 		</div>
 	);
