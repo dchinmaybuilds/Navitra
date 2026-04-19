@@ -71,7 +71,8 @@ ROUTE_WAYPOINTS = [
     (19.092117, 72.848553),
     (19.090961, 72.845867),
     (19.089253, 72.844614),
-    (19.086639, 72.845867)
+    (19.086639, 72.845867),
+    (19.08861, 72.86806)
 ]
 DESTINATION = ROUTE_WAYPOINTS[-1]
 
@@ -100,12 +101,13 @@ def total_remaining_distance(wp_index: int, lat: float, lon: float) -> float:
 
 def network_quality(speed: float) -> str:
     """Mock network quality based on simulated signal."""
-    r = random.random()
+    """ r = random.random()
     if r > 0.85:
         return "poor"
     if r > 0.60:
         return "fluctuating"
-    return "good"
+    return "good" """
+    return "poor"
 
 
 def predict_eta(distance_km: float, avg_speed_kmh: float,

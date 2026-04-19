@@ -1,6 +1,5 @@
 import mapboxgl from 'mapbox-gl';
 import { useEffect, useRef } from 'react';
-import axios from 'axios';
 
 const SLEEP_INTERVALS = { good: 5, fluctuating: 8, poor: 12 };
 const Map = ({ onData }) => {
@@ -21,16 +20,15 @@ const Map = ({ onData }) => {
 	// Ref for destination
 	const destinationLngRef = useRef(null);
 	const destinationLatRef = useRef(null);
-	const destinationCityRef = useRef(null);
 	// Effect 1: Initialize map
 	useEffect(() => {
 		// Set Mapbox token
 		mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-		// Create Map
+		// Create bus marker class
 		const bus = document.createElement('div');
 		bus.className = 'bus-marker';
-
+		// Create Map
 		mapRef.current = new mapboxgl.Map({
 			container: mapContainer.current,
 			style: 'mapbox://styles/mapbox/streets-v12',
@@ -47,11 +45,6 @@ const Map = ({ onData }) => {
 	}, []);
 	// Effect 2: WebSockets
 	useEffect(() => {
-		const getDestination = async (lat, lon) => {
-			const reverseGeocodingURL = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
-			const response = await axios.get(reverseGeocodingURL);
-			destinationCityRef.current = response.data.address.city;
-		};
 		const connect = () => {
 			// Creating connection
 			const socket = new WebSocket(import.meta.env.VITE_WS_URL);
@@ -68,11 +61,8 @@ const Map = ({ onData }) => {
 					})
 						.setLngLat([destinationLngRef.current, destinationLatRef.current])
 						.addTo(mapRef.current);
-					await getDestination(
-						destinationLatRef.current,
-						destinationLngRef.current,
-					);
-					onData({ type: 'init', destinationCity: destinationCityRef.current });
+
+					onData({ type: 'init', destinationCity: 'CSMIA' });
 				} else if (data.type === 'update') {
 					targetLngRef.current = data.lng;
 					targetLatRef.current = data.lat;

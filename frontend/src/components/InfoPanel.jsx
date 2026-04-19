@@ -13,7 +13,9 @@ const InfoPanel = ({
 	hasArrived,
 }) => {
 	return (
-		<div className={`info-panel ${isOpen ? 'visible' : ''}`}>
+		<div
+			className={`info-panel ${isOpen ? 'visible' : ''} ${networkState === 'poor' ? 'warning' : ''}`}
+		>
 			<div className="show-eta">
 				{hasArrived ? (
 					<img src={locationPin} className="location-pin" />
@@ -23,7 +25,11 @@ const InfoPanel = ({
 				{hasArrived ? (
 					'Bus has arrived!'
 				) : eta > 0 ? (
-					`ETA to ${destinationCity || 'destination'}: ${eta} mins`
+					<p
+						className={`eta ${networkState === 'poor' ? 'less-accurate-eta' : ''}`}
+					>
+						ETA to {destinationCity || 'destination'}: {eta} mins
+					</p>
 				) : (
 					<p className="loading">
 						Calculating<span className="dots"></span>
@@ -31,21 +37,26 @@ const InfoPanel = ({
 				)}
 			</div>
 			<div className="show-network">
-				{networkState === 'good' ? (
-					<img src={wifi} className="network-icon" />
-				) : networkState === 'fluctuating' ? (
-					<img src={wifimedium} className="network-icon" />
-				) : networkState === 'poor' ? (
-					<img src={wifipoor} className="network-icon" />
-				) : (
-					<img src={networkIcon} className="network-icon" />
-				)}
-				{networkState ? (
-					networkState.toUpperCase()
-				) : (
-					<p className="loading">
-						Connecting<span className="dots"></span>
-					</p>
+				<div className="network-wrapper">
+					{networkState === 'good' ? (
+						<img src={wifi} className="network-icon" />
+					) : networkState === 'fluctuating' ? (
+						<img src={wifimedium} className="network-icon" />
+					) : networkState === 'poor' ? (
+						<img src={wifipoor} className="network-icon" />
+					) : (
+						<img src={networkIcon} className="network-icon" />
+					)}
+					{networkState ? (
+						networkState.toUpperCase()
+					) : (
+						<p className="loading">
+							Connecting<span className="dots"></span>
+						</p>
+					)}
+				</div>
+				{networkState === 'poor' && (
+					<p className="network-warning">Poor network! Delayed updates </p>
 				)}
 			</div>
 		</div>
